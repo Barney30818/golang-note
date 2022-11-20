@@ -20,6 +20,7 @@
 裡面宣告抽象方法
 ```
 type BankAccount interface {
+	GetName() string
 	GetBalance() int
 	Deposit(amount int)
 	Withdraw(amount int) error
@@ -35,6 +36,10 @@ Golang 中如果自定義型態實現了 interface 的所有方法，那麼它�
 
 ```
 type EsunAccount struct {
+}
+
+func (e *EsunAccount) GetName() string {
+	//TODO implement me
 }
 
 func (e *EsunAccount) GetBalance() int {
@@ -62,8 +67,14 @@ type EsunAccount struct {
 
 func NewEsunAccount() *EsunAccount {
 	return &EsunAccount{
+		accountName: "esunAccount",
 		balance: 0,
 	}
+}
+
+func (e *EsunAccount) GetName() string {
+	fmt.Printf("Account Name= %s\n", e.accountName)
+	return e.accountName
 }
 
 func (e *EsunAccount) GetBalance() int {
@@ -96,12 +107,12 @@ func main() {
 	//領錢
 	esun.Withdraw(600)
 	//印出帳戶剩多少錢
-	fmt.Printf("EsunBank balance: %d\n", esun.GetBalance())
+	fmt.Printf("%s balance: %d\n", esun.GetName(), esun.GetBalance())
 }
 ```
 執行結果：
 ```
-EsunBank balance: 300
+esunAccount balance: 300
 ```
 接下來要展現介面真正的力量了
 
@@ -115,9 +126,15 @@ type CtbcAccount struct {
 
 func NewCtbcAccount() *CtbcAccount {
 	return &CtbcAccount{
+		accountName: "ctbcAccount",
 		balance: 0,
 		fee:     15,
 	}
+}
+
+func (c *CtbcAccount) GetName() string {
+	fmt.Printf("Account Name= %s\n", c.accountName)
+	return c.accountName
 }
 
 func (c *CtbcAccount) GetBalance() int {
@@ -167,3 +184,26 @@ func main() {
 esunAccount balance: 50
 ctbcAccount balance: 35
 ```
+也可以這樣寫：
+```
+//main.go
+func ShowAccountName(m BankAccount) {
+	m.GetName()
+}
+
+func main() {
+	var m BankAccount
+	esun := NewEsunAccount()
+	ctbc := NewCtbcAccount()
+	m = esun
+	ShowAccountName(m)
+	m = ctbc
+	ShowAccountName(m)
+}
+```
+執行結果：
+```
+Account Name= esunAccount
+Account Name= ctbcAccount
+```
+這樣的做法，也展現了介面可以實現了**多型**的行為
