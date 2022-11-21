@@ -207,3 +207,68 @@ Account Name= esunAccount
 Account Name= ctbcAccount
 ```
 這樣的做法，也展現了介面可以實現了**多型**的行為
+
+## 7.2 空介面
+Go程式的interface除了定義型態的行為，本身也是一種型態。而空介面則代表任意型態。
+
+空介面宣告方式：
+```
+interface{}
+```
+
+例如下面的變數```i```的型態為empty interface，所以可以接收任意型態的值。
+```
+type BankAccount struct {
+    accountName string
+    balance     int
+}
+
+func printValueAndType(i interface{}) { // take empty interface as parameter
+    fmt.Printf("value=%v, type=%T\n", i, i)
+}
+
+func main() {
+    var i interface{} // declare var as empty interface type
+
+    i = "abc"
+    printValueAndType(i) // value=abc, type=string
+
+    i = 123
+    printValueAndType(i) // value=123, type=int
+
+    i = BankAccount{"ctbc", 1000}
+    printValueAndType(i) // value={ctbc 1000}, type=main.BankAccount
+}
+```
+有沒有覺得空介面其實很像```泛型(generics)```
+
+[Go 1.18](https://tip.golang.org/doc/go1.18#generics)加入的泛型(generics)新增了一個關鍵字```any```作為空介面```interface{}```的別名，所以之後改用```any```即可
+```
+m := make(map[int]any)
+m["a"] = 123
+m["b"] = "abc"
+```
+也可以看到最經典最常用標準函式庫的例子
+
+**fmt package**
+
+func Println
+```
+func Println(a ...any) (n int, err error)
+```
+所以其實平常用```Println()```印出什麼型別的東西都可以
+
+範例：
+```
+func main() {
+    fmt.Println(123)
+    fmt.Println("abc")
+    fmt.Println(EsunAccount{"esun", 100})
+}
+```
+執行結果：
+```
+123
+abc
+{esun 100}
+```
