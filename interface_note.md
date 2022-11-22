@@ -281,7 +281,6 @@ abc
 上面有提到```Println```方法，這邊來看一下```fmt```的三個函式的源碼
 ```
 package fmt
-```
 func Fprintf(w io.Writer, format string, a ...any) (n int, err error)
 
 func Printf(format string, a ...any) (n int, err error) {
@@ -295,3 +294,26 @@ func Sprintf(format string, args ...interface{}) string {
 }
 ```
 可以看到```Printf()```和```Sprintf()```都會呼叫```Fprintf()```方法，並以```io.Writer```介面當成```Fprintf```與呼叫方的合約
+
+先來看一下```Writer```這個介面
+```
+type Writer interface {
+	Write(p []byte) (n int, err error)
+}
+```
+一方面合約要求呼叫方要有呼叫```Write```方法的具體型別，另一方面合約保證Fprintf在值符合io.Writer介面時會執行工作
+
+那我們就來追看看被當成```w```傳入的參數```os.Stdout```，果然在```os```底下看到一個函式```Write```
+```
+// Write writes len(b) bytes to the File.
+// It returns the number of bytes written and an error, if any.
+// Write returns a non-nil error when n != len(b).
+func (f *File) Write(b []byte) (n int, err error) {
+        if err := f.checkValid("write"); err != nil {
+                return 0, err
+        }
+}
+```
+(想要追更底層可以參考[link](https://ithelp.ithome.com.tw/articles/10218227))
+
+所以任何有實作```io.Writer```介面的具體型別都可以當成實作替換的參數
