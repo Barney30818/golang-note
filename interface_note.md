@@ -317,3 +317,48 @@ func (f *File) Write(b []byte) (n int, err error) {
 (想要追更底層可以參考[link](https://ithelp.ithome.com.tw/articles/10218227))
 
 所以任何有實作```io.Writer```介面的具體型別都可以當成實作替換的參數
+
+## 7.5 介面嵌入介面
+剛剛有提到```Writer```介面
+現在再來看一下另外兩個
+```
+package io
+
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+type Closer interface {
+    Close() error
+}
+```
+可以在介面裡嵌入另一個介面
+
+來看```io```的另一個interface
+```
+type ReadWriter interface {
+	Reader
+	Writer
+}
+```
+直接宣告介面的名稱即可
+
+也可以直接宣告要嵌入介面的方法
+
+舉例：
+```
+type ReadWriter interface {
+	Read(p []byte) (n int, err error)
+	Write(p []byte) (n int, err error)
+}
+```
+甚至混合兩種風格
+```
+type ReadWriter interface {
+	Read(p []byte) (n int, err error)
+	Writer
+}
+```
+
+## 7.6 介面值
+
