@@ -361,4 +361,96 @@ type ReadWriter interface {
 ```
 
 ## 7.6 介面值
+介面值有分為**型別**和**值**兩個元件
 
+介面零值的型別和值皆為nil
+
+這裡再舉例一個fmt套件庫的重要介面
+```
+package fmt
+
+type Stringer interface {
+	String() string
+}
+```
+String方法用於輸出，接受任何格式的或像**Print函數**印出來為格式化的值
+
+這邊我實作了兩個不同型別```Temp```,```Point```來實作**Stringer**介面
+```
+type Temp int
+
+func (t Temp) String() string {
+	return strconv.Itoa(int(t)) + "°C"
+}
+
+type Point struct {
+	x, y int
+}
+
+func (p *Point) String() string {
+	return fmt.Sprintf("%d, %d", p.x, p.y)
+}
+
+```
+再來我們回到了主題來探討介面值
+
+宣告介面並指派具體的型別，來看看各種情況下的介面型別與值
+```
+func main() {
+	var x fmt.Stringer
+	fmt.Printf("value=%v, type=%T\n", x, x) //value=<nil>, type=<nil>
+
+	x = Temp(27)
+	fmt.Printf("value=%v, type=%T\n", x, x) //value=27°C, type=main.Temp
+
+	x = &Point{1, 2}
+	fmt.Printf("value=%v, type=%T\n", x, x) //value=1, 2, type=*main.Point
+
+	x = (*Point)(nil)
+	fmt.Printf("value=%v, type=%T\n", x, x) //value=<nil>, type=*main.Point
+}
+```
+
+**既然有值，就可以比較**
+
+介面值可以用```==``` ```!=```比較
+
+- 兩介面值若型別相同才可以比較
+- 動態值均為nil或是動態型別相同且動態值根據其行為相等則介面值相等時相等時，```==```才成立
+
+範例：
+```
+func main() {
+	//實作AnotherTemp，並且與Temp行為相同
+	var x, y fmt.Stringer
+
+	fmt.Printf("%v %v\n", x, y) //印出兩者的介面值
+	fmt.Println(x == y)         //型別相同且動態值相同
+	fmt.Println("--------------")
+	x = Temp(27)
+	y = AnotherTemp(27)
+	fmt.Printf("%v %v\n", x, y)
+	fmt.Println(x == y)  //動態值相同但動態型別不同
+	fmt.Println("--------------")
+	y = Temp(27) //把y指派給Temp型別
+	fmt.Printf("%v %v\n", x, y)
+	fmt.Println(x == y) //動態型別和動態值皆相同
+}
+```
+執行結果：
+```
+<nil> <nil>
+true
+--------------
+27°C 27°C
+false
+--------------
+27°C 27°C
+true
+```
+⚠️特別注意：有些型別完全不能比較(slice, map與函式)
+
+舉例：
+```
+var x interface{} = []int{1, 2, 3}
+fmt.Println(x == x) // panic: []int型別不能比較
