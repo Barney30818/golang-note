@@ -5,6 +5,10 @@
 - 7.2 介面基本用法
 - 7.3 空介面
 - 7.4 以介面為合約
+- 7.5 介面嵌入介面
+- 7.6 介面值
+- 7.7 sort.Interface排序
+- 7.8 error介面
 
 ## 7.1 何謂介面
 1. Go的介面是一種**抽象型別**
@@ -208,7 +212,7 @@ Account Name= ctbcAccount
 ```
 這樣的做法，也展現了介面可以實現了**多型**的行為
 
-## 7.2 空介面
+## 7.3 空介面
 Go程式的interface除了定義型態的行為，本身也是一種型態。而空介面則代表任意型態。
 
 空介面宣告方式：
@@ -272,3 +276,22 @@ func main() {
 abc
 {esun 100}
 ```
+
+## 7.4 以介面為合約
+上面有提到```Println```方法，這邊來看一下```fmt```的三個函式的源碼
+```
+package fmt
+```
+func Fprintf(w io.Writer, format string, a ...any) (n int, err error)
+
+func Printf(format string, a ...any) (n int, err error) {
+    return Fprintf(os.Stdout, format, args...)
+}
+
+func Sprintf(format string, args ...interface{}) string {
+    var buf bytes.Buffer
+    Fprintf(&buf, format, args...)
+    return buf.String()
+}
+```
+可以看到```Printf()```和```Sprintf()```都會呼叫```Fprintf()```方法，並以```io.Writer```介面當成```Fprintf```與呼叫方的合約
