@@ -515,12 +515,17 @@ func main() {
 ```
 其實這就是sort套件提供的```Strings```函式的做法：[原始碼](https://cs.opensource.google/go/go/+/refs/tags/go1.19.3:src/sort/sort.go;l=164)
 
+- **對字串的slice進行排序**
+
 所以上面的呼叫可以簡化成
 ```
 sort.Strings(names)
 ```
 
 那我們再來看一下其他sort提供的常用函式
+
+- **對整數、浮點數的slice進行排序**
+
 ```
 func main() {
 
@@ -540,6 +545,8 @@ func main() {
 [14 19 25 56 67 78]
 [19.5 20.8 57.4 176.8]
 ```
+- **對struct的slice進行排序**
+
 介紹完了```string``` ```int``` ```float64s```三個常見型別的slice後，來看一下如何對struct slice進行排序
 
 假設有一個struct```User```並塞一些資料給它
@@ -604,5 +611,34 @@ func main() {
 	sort.SliceStable(users, func(i, j int) bool {
 		return users[i].Age < users[j].Age
 	})
+}
+```
+- **自訂排序**
+
+要啟用對任何類型集合的自訂排序，你需要定義一個相對應的類型並實作```sort.Interface```
+```
+type User struct {
+	Name string
+	Age  int
+}
+
+type UsersByAge []User
+
+func (u UsersByAge) Len() int {
+	return len(u)
+}
+func (u UsersByAge) Swap(i, j int) {
+	u[i], u[j] = u[j], u[i]
+}
+func (u UsersByAge) Less(i, j int) bool {
+	return u[i].Age < u[j].Age
+}
+```
+```UsersByAge```實作了```sort.interface```介面，最後一步就是把```UsersByAge```當成參數傳入```Sort```函式
+
+```
+func main() {
+	sort.Sort(UsersByAge(users))
+	fmt.Println("Sorted users by age: ", users) //Sorted users by age:  [{Amanda 16} {Barney 26} {Peter 27} {Steven 28} {Amy 35}]
 }
 ```
