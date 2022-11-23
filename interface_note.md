@@ -470,9 +470,9 @@ sort
 func Sort(data Interface)
 ```
 我們知道一個排序的演算法通常都需要三個東西
-- 排序的長度
-- 表示兩個比較的結果
-- 交換兩個元素的方式
+1. 排序的長度
+2. 表示兩個比較的結果
+3. 交換兩個元素的方式
 
 因此```sort.interface```有三個方法：
 ```
@@ -603,7 +603,7 @@ func main() {
 ```
 Sorted users by age:  [{Amanda 16} {Barney 26} {Peter 27} {Steven 28} {Amy 35}]
 ```
-當使用```Slice()```函數時，排序不保證穩定：相等的元素可能會和它們原本的順序顛倒
+當使用```Slice```函數時，排序不保證穩定：相等的元素可能會和它們原本的順序顛倒
 
 要穩定的排序，請使用```SliceStable()```，[原始碼](https://cs.opensource.google/go/go/+/refs/tags/go1.19.3:src/sort/slice.go;l=32)
 ```
@@ -641,4 +641,37 @@ func main() {
 	sort.Sort(UsersByAge(users))
 	fmt.Println("Sorted users by age: ", users) //Sorted users by age:  [{Amanda 16} {Barney 26} {Peter 27} {Steven 28} {Amy 35}]
 }
+```
+- **相反順序對slice進行排序**
+
+要以相反順序對slice進行排序，可以使用sort提供的```Reverse```函式，[原始碼](https://cs.opensource.google/go/go/+/refs/tags/go1.19.3:src/sort/sort.go;l=94)
+```
+func Reverse(data Interface) Interface
+```
+不過這裡只能用sort提供的三種類型```StringSlice``` ```IntSlice``` ```Float64Slice```來使用```Reverse()，這些類型實作了 sort package 中定義用來比較和交換的 Interface
+
+範例：
+```
+func main() {
+	// Sorting a slice of Strings
+	strs := []string{"Go", "Bravo", "Gopher", "Alpha", "Grin", "Delta"}
+	sort.Sort(sort.Reverse(sort.StringSlice(strs)))
+	fmt.Println("Sorted strings in reverse order: ", strs)
+
+	// Sorting a slice of Integers
+	ints := []int{56, 19, 78, 67, 14, 25}
+	sort.Sort(sort.Reverse(sort.IntSlice(ints)))
+	fmt.Println("Sorted integers in reverse order: ", ints)
+
+	// Sorting a slice of Floats
+	floats := []float64{176.8, 19.5, 20.8, 57.4}
+	sort.Sort(sort.Reverse(sort.Float64Slice(floats)))
+	fmt.Println("Sorted floats in reverse order: ", floats)
+}
+```
+執行結果：
+```
+Sorted strings in reverse order:  [Grin Gopher Go Delta Bravo Alpha]
+Sorted integers in reverse order:  [78 67 56 25 19 14]
+Sorted floats in reverse order:  [176.8 57.4 20.8 19.5]
 ```
