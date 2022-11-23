@@ -7,7 +7,7 @@
 - 7.4 以介面為合約
 - 7.5 介面嵌入介面
 - 7.6 介面值
-- 7.7 sort.Interface排序
+- 7.7 以sort.Interface排序
 - 7.8 error介面
 
 ## 7.1 何謂介面
@@ -454,3 +454,5 @@ true
 ```
 var x interface{} = []int{1, 2, 3}
 fmt.Println(x == x) // panic: []int型別不能比較
+
+## 7.7 以sort.Interface排序
