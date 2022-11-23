@@ -457,8 +457,152 @@ fmt.Println(x == x) // panic: []int型別不能比較
 ```
 
 ## 7.7 以sort.Interface排序
-在很多語言中，排序算法都是和序列數據類型關聯，同時排序函數和具體類型元素關聯
+在很多語言中，排序算法都是和序列資料型別關聯，同時排序函數和具體類型元素關聯
 
-相比之下，Go語言的sort.Sort函數不會對具體的序列和它的元素做任何假設
+相比之下，Go語言的```sort.Sort```函數不會對具體的序列和它的元素做任何假設
 
-它使用了一個接口類型sort.Interface來指定通用的排序算法和可能被排序到的序列類型之間的約定。
+它使用了sort.Interface來指定通用的排序算法和可能被排序到的序列型別之間的合約
+
+此介面通常為slice的排序方式
+
+sort
+```
+func Sort(data Interface)
+```
+我們知道一個排序的演算法通常都需要三個東西
+- 排序的長度
+- 表示兩個比較的結果
+- 交換兩個元素的方式
+
+因此```sort.interface```有三個方法：
+```
+type Interface interface {
+	Len() int
+
+	Less(i, j int) bool
+
+	Swap(i, j int)
+}
+```
+
+為了要對任何序列排序，必須實作這三個方法的型別，最後對該型別的實例套用sort.Sort
+
+以```StringSlice```做範例
+```
+type StringSlice []string
+
+func (p StringSlice) Len() int {
+	return len(p)
+}
+
+func (p StringSlice) Less(i, j int) bool {
+	return p[i] < p[j]
+}
+
+func (p StringSlice) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+func main() {
+	names := []string{"Go", "Bravo", "Gopher", "Alpha", "Grin", "Delta"}
+	sort.Sort(StringSlice(names))
+	fmt.Println(names)
+}
+```
+執行結果：
+```
+[Alpha Bravo Delta Go Gopher Grin]
+```
+其實這就是sort套件提供的```Strings```函式的做法：[原始碼](https://cs.opensource.google/go/go/+/refs/tags/go1.19.3:src/sort/sort.go;l=164)
+
+所以上面的呼叫可以簡化成
+```
+sort.Strings(names)
+```
+
+那我們再來看一下其他sort提供的常用函式
+```
+func main() {
+
+	// Sorting a slice of Integers
+	ints := []int{56, 19, 78, 67, 14, 25}
+	sort.Ints(ints)
+	fmt.Println(ints)
+
+	// Sorting a slice of Floats
+	floats := []float64{176.8, 19.5, 20.8, 57.4}
+	sort.Float64s(floats)
+	fmt.Println(floats)
+}
+```
+執行結果：
+```
+[14 19 25 56 67 78]
+[19.5 20.8 57.4 176.8]
+```
+介紹完了```string``` ```int``` ```float64s```三個常見型別的slice後，來看一下如何對struct slice進行排序
+
+假設有一個struct```User```並塞一些資料給它
+```
+type User struct {
+	Name string
+	Age  int
+}
+
+func main() {
+	// Sorting a slice of structs by a field
+	users := []User{
+		{
+			Name: "Barney",
+			Age:  26,
+		},
+		{
+			Name: "Peter",
+			Age:  27,
+		},
+		{
+			Name: "Amy",
+			Age:  35,
+		},
+		{
+			Name: "Amanda",
+			Age:  16,
+		},
+		{
+			Name: "Steven",
+			Age:  28,
+		},
+	}
+}
+```
+如果要指定依照年齡來排序，可以透過自訂```less```函數並傳給```Slice()```
+
+來看一下sort的```Slice```函式，[原始碼](https://cs.opensource.google/go/go/+/refs/tags/go1.19.3:src/sort/slice.go;l=18)
+```
+func Slice(x any, less func(i, j int) bool) {
+	...
+}
+```
+實作排序：
+```
+func main() {
+	sort.Slice(users, func(i, j int) bool {
+		return users[i].Age < users[j].Age
+	})
+	fmt.Println("Sorted users by age: ", users)
+}
+```
+執行結果：
+```
+Sorted users by age:  [{Amanda 16} {Barney 26} {Peter 27} {Steven 28} {Amy 35}]
+```
+當使用```Slice()```函數時，排序不保證穩定：相等的元素可能會和它們原本的順序顛倒
+
+要穩定的排序，請使用```SliceStable()```，[原始碼](https://cs.opensource.google/go/go/+/refs/tags/go1.19.3:src/sort/slice.go;l=32)
+```
+func main() {
+	sort.SliceStable(users, func(i, j int) bool {
+		return users[i].Age < users[j].Age
+	})
+}
+```
