@@ -454,5 +454,6 @@ true
 ```
 var x interface{} = []int{1, 2, 3}
 fmt.Println(x == x) // panic: []int型別不能比較
+```
 
 ## 7.7 以sort.Interface排序
