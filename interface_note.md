@@ -675,3 +675,105 @@ Sorted strings in reverse order:  [Grin Gopher Go Delta Bravo Alpha]
 Sorted integers in reverse order:  [78 67 56 25 19 14]
 Sorted floats in reverse order:  [176.8 57.4 20.8 19.5]
 ```
+## 7.8 error介面
+
+最常看到的```error```型態，在golang的底層也是interface
+```
+type error interface {
+  Error() string
+}
+```
+它只是一個單一方法並回傳錯誤訊息的介面型別
+
+- **使用 errors.New()**
+
+建構error最簡單的方式是呼叫errors.New，[原始碼](https://cs.opensource.google/go/go/+/refs/tags/go1.19.3:src/errors/errors.go;l=58)
+```
+func New(text string) error {
+	return &errorString{text}
+}
+```
+它回傳指定錯誤訊息的新error
+
+範例：
+```
+func checkHandsomeMan(username string) (bool, error) {
+	if username != "Barney" {
+		return true, errors.New("You are ugly")
+	}
+	return false, nil
+}
+
+func main() {
+	if _, err := checkHandsomeMan("Peter"); err != nil {
+		fmt.Println(err)
+	}
+}
+```
+執行結果：
+```
+You are ugly
+```
+
+- **使用 fmt.Errorf()**
+
+不過呼叫```errors.New```比較少見，因為有```fmt.Errorf```這個方便的包裝函式，它能執行字串格式化
+```
+func Errorf(format string, a ...any) error
+```
+這個函式封裝了```errors.New```，也間接實踐了error這個介面，[原始碼](https://cs.opensource.google/go/go/+/refs/tags/go1.19.3:src/fmt/errors.go;l=17)
+
+範例：
+```
+func checkHandsomeMan(username string) (bool, error) {
+	if username != "Barney" {
+		return true, fmt.Errorf("%s, you are ugly", username)
+	}
+	return false, nil
+}
+
+func main() {
+	if _, err := checkHandsomeMan("Peter"); err != nil {
+		fmt.Println(err)
+	}
+}
+```
+執行結果：
+```
+Peter, you are ugly
+```
+
+- **自己定義 error structure**
+```
+// 定義custom error struct
+type MyError struct {
+	time    string
+	message string
+}
+
+// 實作Error Interface的方法
+func (e MyError) Error() string {
+	return fmt.Sprintf("%s\nThe time is:%s", e.message, e.time)
+}
+
+// 拋出錯誤的函式
+func throw() error {
+	return MyError{
+		time:    time.Now().Format(time.RFC3339),
+		message: "This is error circumstance",
+	}
+}
+```
+呼叫run()：
+```
+func main() {
+	if err := throw(); err != nil {
+		fmt.Println(err)
+	}
+}
+```
+執行結果：
+```
+This is error circumstance
+The time is:2022-11-24T03:58:56+08:00
+```
