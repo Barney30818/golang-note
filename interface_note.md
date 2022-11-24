@@ -7,8 +7,9 @@
 - 7.4 以介面為合約
 - 7.5 介面嵌入介面
 - 7.6 介面值
-- 7.7 以sort.Interface排序
-- 7.8 error介面
+- 7.7 型態判斷
+- 7.8 以sort.Interface排序
+- 7.9 error介面
 
 ## 7.1 何謂介面
 1. Go的介面是一種**抽象型別**
@@ -456,7 +457,122 @@ var x interface{} = []int{1, 2, 3}
 fmt.Println(x == x) // panic: []int型別不能比較
 ```
 
-## 7.7 以sort.Interface排序
+## 7.7 型態判斷
+我們知道interface的變數裡可以存放任何實現此interface的任意型別
+
+要反向知道變數裡面實際儲存的是什麼型別的物件
+
+語意上類似```x.(T)```，```x```是介面的變數，```T```是要判別的型別
+
+**常見的兩種做法**
+
+- **Comma-ok**
+
+如果在```x```裡面確實儲存了```T```型別的數值，那麼ok回傳 true，否則回傳 false
+
+再沿用剛剛的例子並完整宣告三個實現Stringer interface的型別
+```
+// #1
+type Temp int
+
+func (t Temp) String() string {
+	return strconv.Itoa(int(t)) + "°C"
+}
+
+// #2
+type AnotherTemp int
+
+func (a AnotherTemp) String() string {
+	return strconv.Itoa(int(a)) + "°C"
+}
+
+// #3
+type Point struct {
+	x, y int
+}
+
+func (p Point) String() string {
+	return strconv.Itoa(int(p.x)+int(p.y)) + "°C"
+}
+```
+這裡會宣告三個型別塞進陣列，並用if-else分別用Comma-ok來判斷
+```
+func main() {
+	var list [3]fmt.Stringer
+
+	list[0] = Point{13, 14}
+	list[1] = AnotherTemp(27)
+	list[2] = Temp(27)
+
+	for index, eachStringer := range list {
+		if value, ok := eachStringer.(Temp); ok {
+			fmt.Printf("list[%d] is an AnotherTemp and its value is %s\n", index, value)
+		} else if value, ok := eachStringer.(AnotherTemp); ok {
+			fmt.Printf("list[%d] is a Temp and its value is %s\n", index, value)
+		} else if value, ok := eachStringer.(Point); ok {
+			fmt.Printf("list[%d] is a Point type and its value is %s\n", index, value)
+		}
+	}
+}
+```
+執行結果：
+```
+list[0] is a Point type and its value is 27°C
+list[1] is a Temp and its value is 27°C
+list[2] is an AnotherTemp and its value is 27°C
+```
+- **switch**
+
+這裡我把陣列多加第四項，並不塞任何值
+
+所以他會是```Stringer```的空介面
+```
+func main() {
+	//實作AnotherTemp，並且與Temp行為相同
+	//var x, y fmt.Stringer
+	//
+	//fmt.Printf("%v %v\n", x, y) //印出兩者的介面值
+	//fmt.Println(x == y)         //型別相同且動態值相同
+	//fmt.Println("--------------")
+	//x = Temp(27)
+	//y = AnotherTemp(27)
+	//fmt.Printf("%v %v\n", x, y)
+	//fmt.Println(x == y) //動態值相同但動態型別不同
+	//fmt.Println("--------------")
+	//y = Temp(27) //把y指派給Temp型別
+	//fmt.Printf("%v %v\n", x, y)
+	//fmt.Println(x == y) //動態型別和動態值皆相同
+	var list [4]fmt.Stringer
+
+	list[0] = Point{13, 14}
+	list[1] = AnotherTemp(27)
+	list[2] = Temp(27)
+
+	for index, eachStringer := range list {
+		switch value := eachStringer.(type) {
+		case Temp:
+			fmt.Printf("list[%d] is an int and its value is %d\n", index, value)
+		case AnotherTemp:
+			fmt.Printf("list[%d] is a string and its value is %s\n", index, value)
+		case Point:
+			fmt.Printf("list[%d] is a Person and its value is %s\n", index, value)
+		default:
+			fmt.Printf("list[%d] is of a different type and its value is %v\n", index, value)
+		}
+	}
+}
+```
+執行結果：
+```
+list[0] is a Person and its value is 27°C
+list[1] is a string and its value is 27°C
+list[2] is an int and its value is 27
+list[3] is of a different type and its value is <nil>
+```
+
+⚠️特別注意：```eachStringer.(type)```語法不能在 switch 外的任何邏輯裡面使用，如果你要在 switch 外面判斷一個型別就使用```comma-ok```
+
+## 7.8 以sort.Interface排序
 在很多語言中，排序算法都是和序列資料型別關聯，同時排序函數和具體類型元素關聯
 
 相比之下，Go語言的```sort.Sort```函數不會對具體的序列和它的元素做任何假設
@@ -675,7 +791,7 @@ Sorted strings in reverse order:  [Grin Gopher Go Delta Bravo Alpha]
 Sorted integers in reverse order:  [78 67 56 25 19 14]
 Sorted floats in reverse order:  [176.8 57.4 20.8 19.5]
 ```
-## 7.8 error介面
+## 7.9 error介面
 
 最常看到的```error```型態，在golang的底層也是interface
 ```
